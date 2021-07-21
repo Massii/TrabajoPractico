@@ -6,6 +6,8 @@
 
 #include "obstaculo.h"
 #include "lectura.h"
+#include "poligono.h"
+#include "config.h"
 
 
 obstaculo_t *crear_obstaculo(geometria_t geometria; movimiento_t movimiento; color_t color; poligono_t *poligono) {

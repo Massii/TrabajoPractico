@@ -1,3 +1,11 @@
+config.h
+
 lista.c ----> lista.h
 
-operaciones.c ----> operaciones.h
+operaciones.c ----> operaciones.h, config.h
+
+lectura.c  ----> lectura.h, poligono.h
+
+poligono.c  ----> poligono.h, operaciones.h
+
+obstaculo.c ----> obstaculo.h, poligono.h lectura.h, config.h

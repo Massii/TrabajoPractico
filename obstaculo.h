@@ -2,9 +2,6 @@
 #define _OBSTACULOS_H_
 #endif
 
-#include "lectura.h"
-#include "poligono.h"
-
 typedef struct obstaculo {
 	bool impactado;
 	geometria_t geometria;
