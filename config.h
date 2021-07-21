@@ -1,14 +1,6 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#include <stdio.h>
-#include <math.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <stdint.h>
-
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif

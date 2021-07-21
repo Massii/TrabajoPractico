@@ -1,3 +1,7 @@
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include "lectura.h"
 #include "poligono.h"
 

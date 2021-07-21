@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <math.h>
+#include <stddef.h>
 #include "poligono.h"
 #include "operaciones.h"
 
