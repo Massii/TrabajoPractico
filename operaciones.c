@@ -20,8 +20,8 @@ float producto_interno(float ax, float ay, float bx, float by){
 }
 
 void rotar(float poligono[][2], size_t n, double rad) {
-  float coseno = cos(PI);
-  float seno = sin(PI);
+  float coseno = cos(rad);
+  float seno = sin(rad);
   float x,y;
 
   for(size_t i = 0; i<n; i++) {
