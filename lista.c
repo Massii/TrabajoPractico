@@ -1,8 +1,8 @@
+#include "lista.h"
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include "lista.h"
 
 typedef struct nodo {
     void *dato;

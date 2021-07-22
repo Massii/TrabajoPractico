@@ -1,19 +1,33 @@
 #ifndef _LECTURA_H_
 #define _LECTURA_H_
 
+#include "poligono.h"
+#include "operaciones.h"
+#include "config.h"
+
+
 
 #define MASK_COLOR 0xC0 // 1100 0000
 #define MASK_MOV 0x30 // 0011 0000
 #define MASK_GEO 0x0F // 0000 1111
 
+#ifndef color_t
 typedef enum color {COLOR_AZUL, COLOR_NARANJA, COLOR_VERDE, COLOR_GRIS} color_t;
+#endif
+
+#ifndef movimiento_t
 typedef enum movimiento {MOV_INMOVIL, MOV_CIRCULAR, MOV_HORIZONTAL} movimiento_t;
+#endif
+
+#ifndef geometria_t
 typedef enum geometria {GEO_CIRCULO, GEO_RECTANGULO, GEO_POLIGONO} geometria_t;
+#endif
 
 
 const char *colores[] = {
 	[COLOR_AZUL] = "Azul", [COLOR_NARANJA] = "Naranja", [COLOR_VERDE] = "Verde", [COLOR_GRIS] = "Gris"
 };
+
 
 const char *nombres_movimiento[] = {
 	[MOV_INMOVIL] = "Inmóvil", [MOV_CIRCULAR] = "Circular", [MOV_HORIZONTAL] = "Horizontal"
@@ -32,7 +46,11 @@ bool leer_movimiento_inmovil(FILE *f, int16_t parametros[], size_t *n_parametros
 bool leer_movimiento_circular(FILE *f, int16_t parametros[], size_t *n_parametros);
 bool leer_movimiento_horizontal(FILE *f, int16_t parametros[], size_t *n_parametros);
 bool leer_movimiento(FILE *f, movimiento_t movimiento, int16_t parametros[], size_t *n_parametros);
-bool (*movimientos[])(FILE *f, int16_t parametros[], size_t *n_parametros);
+bool (*movimientos[])(FILE *f, int16_t parametros[], size_t *n_parametros) = {
+	[MOV_INMOVIL] = leer_movimiento_inmovil, 
+	[MOV_CIRCULAR] = leer_movimiento_circular, 
+	[MOV_HORIZONTAL] = leer_movimiento_horizontal
+};
 
 poligono_t *leer_geometria_circulo(FILE *f);
 poligono_t *leer_geometria_rectangulo(FILE *f);

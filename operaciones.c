@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stddef.h>
 #include "operaciones.h"
-#include "config.h"
+
 
 void trasladar(float poligono[][2], size_t n, float dx, float dy) {
   for(size_t i = 0; i < n; i++) {
@@ -16,7 +16,7 @@ float prod_vectorial(float v1[2], float v2[2]){
 }
 
 float producto_interno(float ax, float ay, float bx, float by){
-  return(ax*by - ay*bx);
+  return(ax*bx + ay*by);
 }
 
 void rotar(float poligono[][2], size_t n, double rad) {
@@ -47,6 +47,9 @@ double computar_posicion(double pi, double vi, double dt){
 }
 
 
+double distancia(float xp, float yp, float xi, float yi) {
+  return (sqrt((xp-xi)*(xp-xi) + (yp-yi)*(yp-yi)));
+}
 
 /*
 Para encontrar la distancia de un punto a una recta se proyecta el punto

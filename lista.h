@@ -1,6 +1,9 @@
 #ifndef LISTA_H
 #define LISTA_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 /*
  * Definición de los tipos de datos
  */

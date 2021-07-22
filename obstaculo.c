@@ -5,10 +5,6 @@
 #include <math.h>
 
 #include "obstaculo.h"
-#include "lectura.h"
-#include "poligono.h"
-#include "config.h"
-
 
 obstaculo_t *crear_obstaculo(geometria_t geometria, movimiento_t movimiento, color_t color, poligono_t *poligono) {
 	obstaculo_t *obstaculo = malloc(sizeof(obstaculo_t)); 
@@ -49,3 +45,5 @@ obstaculo_t *obstaculo_crear_desde_archivo(FILE *f) {
 	obstaculo_t *obstaculo = crear_obstaculo(geometria, movimiento, color, poligono);
 	return obstaculo;
 }
+
+

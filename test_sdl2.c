@@ -1,13 +1,56 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 
-#include "config.h"
-#include "operaciones.h"
+
+#include "sdl2.h"
 
 #define DT (1.0 / JUEGO_FPS)
 
 #ifdef TTF
 #include <SDL2/SDL_ttf.h>
+
+
+void dibujar_obstaculo(SDL_Renderer *renderer, obstaculo_t *obstaculo) {
+     dibujar_geometria[obstaculo->geometria](renderer, obstaculo);
+}
+
+
+void dibujar_circulo(SDL_Renderer *renderer, obstaculo_t *circulo) {
+    for(size_t i = 0; i < circulo->poligono->n-1; i++) {
+        if(circulo->color == COLOR_AZUL) SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0x00);
+        if(circulo->color == COLOR_NARANJA) SDL_SetRenderDrawColor(renderer, 0x0FF, 0x0F, 0x00, 0x00);
+        if(circulo->color == COLOR_VERDE) SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
+        
+        SDL_RenderDrawLine(renderer, circulo->poligono->vertices[i][0], circulo->poligono->vertices[i][1], circulo->poligono->vertices[i+1][0], circulo->poligono->vertices[i+1][1]);
+    }
+}
+
+void dibujar_rectangulo(SDL_Renderer *renderer, obstaculo_t *rectangulo) {
+    if(rectangulo->color == COLOR_AZUL) SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0x00);
+    if(rectangulo->color == COLOR_NARANJA) SDL_SetRenderDrawColor(renderer, 0x0FF, 0x0F, 0x00, 0x00);
+    if(rectangulo->color == COLOR_VERDE) SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
+
+    for(size_t i = 0; i < 3; i++) {
+            SDL_RenderDrawLine(renderer, rectangulo->poligono->vertices[i][0], rectangulo->poligono->vertices[i][1], rectangulo->poligono->vertices[i+1][0], rectangulo->poligono->vertices[i+1][1]);
+        }
+        SDL_RenderDrawLine(renderer, rectangulo->poligono->vertices[3][0], rectangulo->poligono->vertices[3][1], rectangulo->poligono->vertices[0][0], rectangulo->poligono->vertices[0][1]);
+}
+
+void dibujar_poligono(SDL_Renderer *renderer, obstaculo_t *obstaculo) {
+    if(obstaculo->color == COLOR_AZUL) SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0x00);
+    if(obstaculo->color == COLOR_NARANJA) SDL_SetRenderDrawColor(renderer, 0x0FF, 0x0F, 0x00, 0x00);
+    if(obstaculo->color == COLOR_VERDE) SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
+
+    size_t i = 0;
+
+    for(i = 0; i < obstaculo->poligono->n-1; i++) {
+            SDL_RenderDrawLine(renderer, obstaculo->poligono->vertices[i][0], obstaculo->poligono->vertices[i][1], obstaculo->poligono->vertices[i+1][0], obstaculo->poligono->vertices[i+1][1]);
+        }
+        SDL_RenderDrawLine(renderer, obstaculo->poligono->vertices[obstaculo->poligono->n-1][0], obstaculo->poligono->vertices[obstaculo->poligono->n-1][1], obstaculo->poligono->vertices[0][0], obstaculo->poligono->vertices[0][1]);
+}
+
+
+
 
 void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x, int y) {
     SDL_Color color = {255, 255, 255};  // Estaría bueno si la función recibe un enumerativo con el color, ¿no?
@@ -25,6 +68,7 @@ void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 }
+
 #endif
 
 int main(int argc, char *argv[]) {
@@ -79,9 +123,10 @@ int main(int argc, char *argv[]) {
 
 
         // BEGIN código del alumno
-#ifdef TTF
+        #ifdef TTF
         escribir_texto(renderer, font, "Peggle", 100, 20);
-#endif
+        #endif
+
 
         if(cayendo) {
             // Si la bola está cayendo actualizamos su posición

@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include <math.h>
 #include <stddef.h>
 #include "poligono.h"
 #include "operaciones.h"
+#include "config.h"
 
 poligono_t *poligono_crear(float vertices[][2], size_t n) {
   poligono_t *pol = malloc(sizeof(poligono_t));
