@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//LISTAS
 typedef struct nodo {
     void *dato;
     struct nodo *prox;
@@ -228,3 +229,4 @@ void lista_iterar(lista_t *lista,
         nodo = nodo->prox;
     }
 }
+
