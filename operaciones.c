@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
-#include "operaciones.h"
 
+#include "operaciones.h"
 
 void trasladar(float poligono[][2], size_t n, float dx, float dy) {
   for(size_t i = 0; i < n; i++) {
@@ -97,4 +97,3 @@ void reflejar(float norm_x, float norm_y, float *cx, float *cy, float *vx, float
     *cx += norm_x * 0.1;
     *cy += norm_y * 0.1;
 }
-

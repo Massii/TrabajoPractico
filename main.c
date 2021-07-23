@@ -1,58 +1,23 @@
 #include <SDL2/SDL.h>
-#include <stdbool.h>
 #define DT (1.0 / JUEGO_FPS)
+
+#include <stdio.h>
+#include <math.h>
+#include <stddef.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <stdint.h>
+
+#include "main.h"
+#include "config.h"
+#include "obstaculo.h"
+#include "operaciones.h"
+#include "lectura.h"
+#include "lista.h"
 
 #ifdef TTF
 #include <SDL2/SDL_ttf.h>
-
-
-void dibujar_obstaculo(SDL_Renderer *renderer, obstaculo_t *obstaculo) {
-  switch(obstaculo->color) {
-      case(COLOR_AZUL): {
-              SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0x00);
-              break;
-            }
-      case(COLOR_NARANJA):{
-              SDL_SetRenderDrawColor(renderer, 0xFF, 0xC0, 0x00, 0x00);
-              break;
-            }
-      case(COLOR_GRIS):{ 
-              SDL_SetRenderDrawColor(renderer, 0xC0, 0xC0, 0xC0, 0x00);
-              break;
-            }
-      case(COLOR_VERDE): {
-              SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
-              break;
-            }
-  }
-  dibujar_geometria[obstaculo->geometria](renderer, obstaculo->poligono);
-}
-
-
-void dibujar_circulo(SDL_Renderer *renderer, poligono_t *circulo) {
-    for(size_t i = 0; i < circulo->n-1; i++) {
-        SDL_RenderDrawLine(renderer, circulo->vertices[i][0], circulo->vertices[i][1], circulo->vertices[i+1][0], circulo->vertices[i+1][1]);
-    }
-}
-
-
-void dibujar_rectangulo(SDL_Renderer *renderer, poligono_t *rectangulo) {
-    for(size_t i = 0; i < 3; i++) {
-            SDL_RenderDrawLine(renderer, rectangulo->vertices[i][0], rectangulo->vertices[i][1], rectangulo->vertices[i+1][0], rectangulo->vertices[i+1][1]);
-        }
-        SDL_RenderDrawLine(renderer, rectangulo->vertices[3][0], rectangulo->vertices[3][1], rectangulo->vertices[0][0], rectangulo->vertices[0][1]);
-}
-
-void dibujar_poligono(SDL_Renderer *renderer, poligono_t *obstaculo) {
-    size_t i = 0;
-
-    for(i = 0; i < obstaculo->n-1; i++) {
-            SDL_RenderDrawLine(renderer, obstaculo->vertices[i][0], obstaculo->vertices[i][1], obstaculo->vertices[i+1][0], obstaculo->vertices[i+1][1]);
-        }
-        SDL_RenderDrawLine(renderer, obstaculo->vertices[obstaculo->n-1][0], obstaculo->vertices[obstaculo->n-1][1], obstaculo->vertices[0][0], obstaculo->vertices[0][1]);
-}
-
-
 
 
 void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x, int y) {
@@ -123,7 +88,7 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
 
         }
 
-        printf("Cant Obstaculos %zd\n", obstaculos);
+        printf("Cant Obstaculos %d\n", obstaculos);
         printf("Largo de la lista %zd\n", lista_largo(lista));
         puts("HASTA ACA LLEGUE");
         return;
@@ -278,4 +243,3 @@ int main(int argc, char *argv[]) {
     SDL_Quit();
     return 0;
 }
-

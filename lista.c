@@ -1,26 +1,11 @@
-#include "lista.h"
-
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+
+#include "lista.h"
 
 //LISTAS
-typedef struct nodo {
-    void *dato;
-    struct nodo *prox;
-} nodo_t;
-
-struct lista {
-    nodo_t *primero;
-    nodo_t *ultimo;
-    size_t largo;
-};
-
-struct lista_iter {
-    lista_t *lista;
-    nodo_t *ant;
-    nodo_t *act;
-};
 
 lista_t *lista_crear() {
     lista_t *lista = malloc(sizeof(lista_t));

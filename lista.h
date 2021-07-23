@@ -1,18 +1,26 @@
-#ifndef LISTA_H
-#define LISTA_H
-
-#include <stdbool.h>
-#include <stddef.h>
+#ifndef _LISTA_H_
+#define _LISTA_H_
 
 /*
  * Definición de los tipos de datos
  */
 
-struct lista;
-struct lista_iter;
+typedef struct nodo {
+    void *dato;
+    struct nodo *prox;
+}nodo_t;
 
-typedef struct lista lista_t;
-typedef struct lista_iter lista_iter_t;
+typedef struct lista {
+    nodo_t *primero;
+    nodo_t *ultimo;
+    size_t largo;
+}lista_t;
+
+typedef struct lista_iter {
+    lista_t *lista;
+    nodo_t *ant;
+    nodo_t *act;
+}lista_iter_t;
 
 /*
  * Primitivas de lista simplemente enlazada

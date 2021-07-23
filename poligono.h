@@ -20,5 +20,3 @@ bool punto_en_poligono(float poligono[][2], size_t n, float px, float py);
 double poligono_distancia(const poligono_t *p, float xp, float yp, float *nor_x, float *nor_y);
 
 #endif
-
-//

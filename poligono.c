@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stddef.h>
+
 #include "poligono.h"
 #include "operaciones.h"
 #include "config.h"

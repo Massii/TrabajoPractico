@@ -2,10 +2,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+
 #include "lectura.h"
+#include "poligono.h"
+#include "operaciones.h"
+#include "config.h"
 
-//
+const char *colores[] = {
+    [COLOR_AZUL] = "Azul", [COLOR_NARANJA] = "Naranja", [COLOR_VERDE] = "Verde", [COLOR_GRIS] = "Gris"
+};
 
+const char *nombres_movimiento[] = {
+    [MOV_INMOVIL] = "Inmóvil", [MOV_CIRCULAR] = "Circular", [MOV_HORIZONTAL] = "Horizontal"
+};
+
+const char *nombres_geometria[] = {
+    [GEO_CIRCULO] = "Círculo", [GEO_RECTANGULO] = "Rectángulo", [GEO_POLIGONO] = "Polígono"
+};
+
+
+bool (*movimientos[])(FILE *f, int16_t parametros[], size_t *n_parametros) = {
+    [MOV_INMOVIL] = leer_movimiento_inmovil, 
+    [MOV_CIRCULAR] = leer_movimiento_circular, 
+    [MOV_HORIZONTAL] = leer_movimiento_horizontal
+};
+
+
+poligono_t *(*geometrias[])(FILE *f) = {leer_geometria_circulo, leer_geometria_rectangulo, leer_geometria_poligono};
 
 
 bool leer_encabezado(FILE *f, color_t *color, movimiento_t *movimiento, geometria_t *geometria) {

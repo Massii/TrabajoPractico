@@ -20,5 +20,3 @@ void reflejar(float norm_x, float norm_y, float *cx, float *cy, float *vx, float
 double distancia(float xp, float yp, float xi, float yi);
 
 #endif
-
-//

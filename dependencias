@@ -1,11 +1,24 @@
 config.h
 
+main.c ----> main.h obstaculo.h operaciones.h config.h lectura.h lista.h
+
 lista.c ----> lista.h
 
-operaciones.c ----> operaciones.h, config.h
+#operaciones.c ----> operaciones.h, config.h
+operaciones.c ----> operaciones.h
 
-lectura.c  ----> lectura.h, poligono.h
+lectura.c  ----> lectura.h poligono.h operaciones.h config.h
 
-poligono.c  ----> poligono.h, operaciones.h
+poligono.c  ----> poligono.h operaciones.h config.h
 
-obstaculo.c ----> obstaculo.h, poligono.h lectura.h, config.h
+obstaculo.c ----> obstaculo.h poligono.h lectura.h config.h
+
+
+---
+main.h ----> SDL2/SDL.h SDL2/SDL_ttf.h lista.h
+obstaculo.h ----> SDL2/SDL.h SDL2/SDL_ttf.h lectura.h poligono.h
+lectura.h ----> stddef.h stdint.h poligono.h
+
+
+name.o: name.h
+	$(CC) $(CFLAGS) -c name.c
