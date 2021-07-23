@@ -18,7 +18,7 @@ obstaculo.c ----> obstaculo.h poligono.h lectura.h config.h
 main.h ----> SDL2/SDL.h SDL2/SDL_ttf.h lista.h
 obstaculo.h ----> SDL2/SDL.h SDL2/SDL_ttf.h lectura.h poligono.h
 lectura.h ----> stddef.h stdint.h poligono.h
-
+operaciones.h ----> config.h
 
 name.o: name.h
 	$(CC) $(CFLAGS) -c name.c

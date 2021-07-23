@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+
 #include "poligono.h"
 
 #define MASK_COLOR 0xC0 // 1100 0000
