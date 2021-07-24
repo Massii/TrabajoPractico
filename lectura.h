@@ -5,12 +5,14 @@
 #include <stdint.h>
 
 #include "poligono.h"
+#include "operaciones.h"
+#include "config.h"
 
 #define MASK_COLOR 0xC0 // 1100 0000
 #define MASK_MOV 0x30 // 0011 0000
 #define MASK_GEO 0x0F // 0000 1111
 
-typedef enum color {COLOR_AZUL, COLOR_NARANJA, COLOR_VERDE, COLOR_GRIS} color_t;
+typedef enum color {COLOR_AZUL, COLOR_NARANJA, COLOR_VERDE, COLOR_GRIS, COLOR_AMARILLO} color_t;
 typedef enum movimiento {MOV_INMOVIL, MOV_CIRCULAR, MOV_HORIZONTAL} movimiento_t;
 typedef enum geometria {GEO_CIRCULO, GEO_RECTANGULO, GEO_POLIGONO} geometria_t;
 

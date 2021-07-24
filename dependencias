@@ -1,6 +1,6 @@
 config.h
 
-main.c ----> main.h obstaculo.h operaciones.h config.h lectura.h lista.h
+main.c ----> main.h obstaculo.h operaciones.h config.h lectura.h lista.h choques.h
 
 lista.c ----> lista.h
 
@@ -11,8 +11,9 @@ lectura.c  ----> lectura.h poligono.h operaciones.h config.h
 
 poligono.c  ----> poligono.h operaciones.h config.h
 
-obstaculo.c ----> obstaculo.h poligono.h lectura.h config.h
+obstaculo.c ----> obstaculo.h poligono.h lectura.h config.h operaciones.h main.h
 
+choques.c ----> choques.h obstaculo.h poligono.h lectura.h lista.h config.h operaciones.h
 
 ---
 main.h ----> SDL2/SDL.h SDL2/SDL_ttf.h lista.h

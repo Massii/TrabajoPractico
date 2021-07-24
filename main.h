@@ -5,7 +5,9 @@
 #include <SDL2/SDL_ttf.h>
 #include "lista.h"
 
+#define DT (1.0 / JUEGO_FPS)
+
 void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x, int y);
-void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista);
+void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista);
 
 #endif

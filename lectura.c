@@ -4,10 +4,11 @@
 #include <stddef.h>
 
 #include "lectura.h"
+/*
 #include "poligono.h"
 #include "operaciones.h"
 #include "config.h"
-
+*/
 const char *colores[] = {
     [COLOR_AZUL] = "Azul", [COLOR_NARANJA] = "Naranja", [COLOR_VERDE] = "Verde", [COLOR_GRIS] = "Gris"
 };
@@ -83,7 +84,7 @@ poligono_t *leer_geometria_rectangulo(FILE *f) {
       return NULL;
     }
     // x, y, ancho, alto, angulo
-    float vertices[][2] = {{v[2]/2, v[3]/2}, {v[2]/2, -v[3]/2}, {-v[2]/2, -v[3]/2}, {-v[2]/2, v[3]/2}};
+    float vertices[][2] = {{v[2]/2, v[3]/2}, {-v[2]/2, v[3]/2}, {-v[2]/2, -v[3]/2}, {v[2]/2, -v[3]/2}};
     poligono_t *rectangulo = poligono_crear(vertices, 4);
     rotar(rectangulo->vertices, 4, v[4]*PI/180);
     trasladar(rectangulo->vertices, 4, v[0], v[1]);

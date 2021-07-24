@@ -5,8 +5,6 @@
 #include <stddef.h>
 
 #include "poligono.h"
-#include "operaciones.h"
-#include "config.h"
 
 poligono_t *poligono_crear(float vertices[][2], size_t n) {
   poligono_t *pol = malloc(sizeof(poligono_t));
@@ -78,10 +76,9 @@ poligono_t *circular(size_t resolucion, size_t radio, size_t x, size_t y) {
 
     float angulo = 360/resolucion;
 
-    size_t j = resolucion-1;
-    for(size_t i = 0; i < resolucion; i++, j--) {
-      vertices[j][0] = radio*cos(i*angulo*PI/180);
-      vertices[j][1] = radio*sin(i*angulo*PI/180);
+    for(size_t i = 0; i < resolucion; i++) {
+      vertices[i][0] = radio*cos(i*angulo*PI/180);
+      vertices[i][1] = radio*sin(i*angulo*PI/180);
     }
 
     trasladar(vertices, resolucion, x, y);

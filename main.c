@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
-#define DT (1.0 / JUEGO_FPS)
+//#define DT (1.0 / JUEGO_FPS)
 
 #include <stdio.h>
 #include <math.h>
@@ -15,6 +15,7 @@
 #include "operaciones.h"
 #include "lectura.h"
 #include "lista.h"
+#include "choques.h"
 
 #ifdef TTF
 #include <SDL2/SDL_ttf.h>
@@ -39,6 +40,7 @@ void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x
 
 #endif
 
+/*
 void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
 
     FILE *f = fopen(argv[1], "rb");
@@ -46,9 +48,9 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
         fprintf(stderr, "No pudo abrirse \"%s\"\n", argv[1]);
         return;
     }
-
+*/
   
-
+void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista) {
     int nivel = 0;
     while(1) {
         nivel++;
@@ -83,8 +85,7 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
             for(size_t i = 0; i < n_parametros; i++)
                 printf(", %d", parametros[i]);
             putchar('\n');
-
-            lista_insertar_primero(lista, crear_obstaculo(geometria, movimiento, color, leer_geometria(f, geometria))); 
+            lista_insertar_primero(lista, crear_obstaculo(geometria, movimiento, color, leer_geometria(f, geometria), n_parametros, parametros)); 
 
         }
 
@@ -97,6 +98,18 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
   }
 
 int main(int argc, char *argv[]) {
+
+    if(argc != 2) {
+        printf("Error, dame un nivel\n");
+        return 1;
+    }
+
+    FILE *f = fopen(argv[1], "rb");
+    if(f == NULL) {
+        fprintf(stderr, "No pudo abrirse \"%s\"\n", argv[1]);
+        return 1;
+    }
+
     SDL_Init(SDL_INIT_VIDEO);
 
 #ifdef TTF
@@ -108,16 +121,27 @@ int main(int argc, char *argv[]) {
     SDL_Renderer *renderer;
     SDL_Event event;
 
-    lista_t *lista = lista_crear();
-
-    lectura(argc, argv, renderer, lista);
-    
-
     SDL_CreateWindowAndRenderer(VENTANA_ANCHO, VENTANA_ALTO, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Peggle");
 
-    int dormir = 0;
+    for(size_t nivel = 1; nivel <= CANT_NIVELES; nivel++){
+        lista_t *lista = lista_crear();
+        lectura(f, renderer, lista);
+        
+        obstaculo_t *atrapabolas = crear_atrapabolas();
+        lista_insertar_ultimo(lista, atrapabolas);
+
+        int dormir = 0;
+    
     // BEGIN código del alumno
+    char s[30];
+    sprintf(s, "Nivel %zd", nivel);
+
+    int bolas = 13;
+    bool bola_atrapada = false;
+    size_t naranja = 0;
+    size_t poder = 0;
+
     float canon_angulo = 0; // Ángulo del cañón
     bool cayendo = false;   // ¿Hay bola disparada?
 
@@ -154,19 +178,54 @@ int main(int argc, char *argv[]) {
 
         // BEGIN código del alumno
         #ifdef TTF
+        if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 450, 20);
+
         escribir_texto(renderer, font, "Peggle", 100, 20);
+        escribir_texto(renderer, font, "Nivel 1", 350, 20); //-
         #endif
+
+        if(poder) {
+            activar_poder(&cx, &cy, lista);
+            poder = 0;
+        }
 
         lista_iter_t *iter = lista_iter_crear(lista);
 
-        for(size_t i = 0; i < lista->largo; i++) {
-          dibujar_obstaculo(renderer, lista_iter_ver_actual(iter));
-          lista_iter_avanzar(iter);
+        while(!lista_iter_al_final(iter)) {
+            obstaculo_t *aux = lista_iter_ver_actual(iter);
+            mover(aux);
+            choque(aux, &cx, &cy, &vx, &vy, &poder);
+
+            if(aux->impactos >= 30 && aux->color != COLOR_GRIS){
+                lista_iter_borrar(iter);
+                lista_iter_avanzar(iter);
+                continue;
+            }
+
+            dibujar_obstaculo(renderer, aux);
+            lista_iter_avanzar(iter);
         }
 
 
+        /*for(size_t i = 0; i < lista->largo; i++) {
+          dibujar_obstaculo(renderer, lista_iter_ver_actual(iter));
+          lista_iter_avanzar(iter);
+        }*/
+            /*
+        for(size_t i = 0; i < lista->largo; i++) {
+          obstaculo_t *aux = lista_iter_ver_actual(iter);
+
+          dibujar_obstaculo(renderer, aux);
+          mover(aux);
+          lista_iter_insertar(iter, aux);
+          lista_iter_borrar(iter);
+          lista_iter_avanzar(iter);
+        }
+        */
+
+
         if(lista_iter_al_final(iter)){
-                  lista_iter_destruir(iter);
+            lista_iter_destruir(iter);
         }
 
 
@@ -191,9 +250,45 @@ int main(int argc, char *argv[]) {
         if(cy < MIN_Y + BOLA_RADIO) vy = -vy;
 
         // Se salió de la pantalla:
-        if(cy > MAX_Y - BOLA_RADIO)
+
+        if(cy > MAX_Y - BOLA_RADIO) {
+            if(atrapabolas->poligono->vertices[3][0] + BOLA_RADIO > cx && cx > atrapabolas->poligono->vertices[5][0] - BOLA_RADIO) {
+                bola_atrapada = true;
+                bolas ++;
+            }
+            else bola_atrapada = false;
             cayendo = false;
 
+            poder = 0;
+            bolas --;
+            naranja = 0;
+            verificar_choques(lista, &naranja);
+            printf("Largo de la lista = %zd\n", lista->largo);
+            
+            printf("Naranjas = %zd\n", naranja);
+            printf("Naranjas = %zd\n", naranja);
+
+            if(naranja == 0) {
+                printf("Ganaste\n");
+                //lista_destruir(lista, destruir_obstaculo);
+                break;
+            }
+
+            if(bolas < 0){
+                printf("Perdiste, perdiste, no hay nadie peor que vos\n");
+                //bolas ++;
+                //lista_destruir(lista, destruir_obstaculo);  
+                nivel = CANT_NIVELES;
+                break;
+            }
+        }
+
+        //-
+        // Dibujo cantidad de bolas 
+        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
+        for(size_t i = 0; i < bolas; i++) {
+            dibujar_circulo(renderer, circular(RESOLUCION, 15, 40, 40*(i+1)));
+        }
 
         // Dibujamos el cañón:
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
@@ -210,8 +305,21 @@ int main(int argc, char *argv[]) {
         SDL_RenderDrawLine(renderer, MIN_X, MAX_Y, MIN_X, MIN_Y);
         SDL_RenderDrawLine(renderer, MAX_X, MAX_Y, MAX_X, MIN_Y);
 
-        // Dibujamos el vector de velocidad:
+        /*// Dibujamos el vector de velocidad:
         SDL_RenderDrawLine(renderer, cx, cy, cx + vx, cy + vy);
+        */
+        //-
+        // Dibujamos el vector de velocidad:
+        float x_vector = cx;
+        float y_vector = cy;
+        float vel_vector_y = vy;
+        float vel_vector_x = vx;
+        while(y_vector < MAX_Y) {
+            SDL_RenderDrawLine(renderer, x_vector, y_vector, x_vector + vel_vector_x * DT, y_vector + vel_vector_y * DT);
+            x_vector = computar_posicion(x_vector, vel_vector_x, DT);
+            y_vector = computar_posicion(y_vector, vel_vector_y, DT);
+            vel_vector_y = computar_velocidad(vel_vector_y, G, DT);
+        }
         // END código del alumno
 
         SDL_RenderPresent(renderer);
@@ -224,6 +332,10 @@ int main(int argc, char *argv[]) {
             SDL_Delay(1000 / JUEGO_FPS - ticks);
         ticks = SDL_GetTicks();
     }
+}
+
+    printf("Cierro el programa\n");
+    fclose(f);
 
 
     // BEGIN código del alumno

@@ -1,6 +1,9 @@
 #ifndef _POLIGONO_H_
 #define _POLIGONO_H_
 
+#include "operaciones.h"
+#include "config.h"
+
 typedef struct {
   float (*vertices)[2];
   size_t n;
