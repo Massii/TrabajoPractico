@@ -83,7 +83,7 @@ double poligono_distancia(const poligono_t *p, float xp, float yp, float *nor_x,
 #define MASK_GEO 0x0F // 0000 1111
 
 #ifndef color_t
-typedef enum color {COLOR_AZUL, COLOR_NARANJA, COLOR_VERDE, COLOR_GRIS} color_t;
+typedef enum color {COLOR_AZUL, COLOR_NARANJA, COLOR_VERDE, COLOR_GRIS, COLOR_AMARILLO} color_t;
 #endif
 
 #ifndef movimiento_t
@@ -131,7 +131,7 @@ poligono_t *(*geometrias[])(FILE *f) = {leer_geometria_circulo, leer_geometria_r
 
 //Obstaculo 
 typedef struct obstaculo {
-	bool impactado;
+	size_t impactos;
 	geometria_t geometria;
 	movimiento_t movimiento;
 	color_t color;
@@ -285,5 +285,9 @@ void *lista_iter_borrar(lista_iter_t *iter);
 void lista_iterar(lista_t *lista,
                   bool (*visitar)(void *dato, void *extra),
                   void *extra);
+
+//////CHOQUE
+bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, size_t *poder);
+#define CANT_NIVELES 6
 
 #endif  // LISTA_H

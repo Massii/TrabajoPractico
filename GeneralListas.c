@@ -395,16 +395,30 @@ bool poligono_agregar_vertice(poligono_t *pol, float x, float y) {
   return true;
 }
 
+void poligono_invertir(poligono_t *pol) {
+    float aux[2];
+    for(size_t i = 0, j = pol->n-1; i < (pol->n)/2; i++, j--) {
+        aux[0] = pol->vertices[i][0];
+        aux[1] = pol->vertices[i][1];
+
+        pol->vertices[i][0] = pol->vertices[j][0];
+        pol->vertices[i][1] = pol->vertices[j][1];
+
+        pol->vertices[j][0] = aux[0];
+        pol->vertices[j][1] = aux[1];
+    }
+    return;
+}
+
 
 poligono_t *circular(size_t resolucion, size_t radio, size_t x, size_t y) {
     float vertices[resolucion][2];
 
     float angulo = 360/resolucion;
 
-    size_t j = resolucion-1;
-    for(size_t i = 0; i < resolucion; i++, j--) {
-      vertices[j][0] = radio*cos(i*angulo*PI/180);
-      vertices[j][1] = radio*sin(i*angulo*PI/180);
+    for(size_t i = 0; i < resolucion; i++) {
+      vertices[i][0] = radio*cos(i*angulo*PI/180);
+      vertices[i][1] = radio*sin(i*angulo*PI/180);
     }
 
     trasladar(vertices, resolucion, x, y);
@@ -539,7 +553,7 @@ poligono_t *leer_geometria_rectangulo(FILE *f) {
       return NULL;
     }
     // x, y, ancho, alto, angulo
-    float vertices[][2] = {{v[2]/2, v[3]/2}, {v[2]/2, -v[3]/2}, {-v[2]/2, -v[3]/2}, {-v[2]/2, v[3]/2}};
+    float vertices[][2] = {{v[2]/2, v[3]/2}, {-v[2]/2, v[3]/2}, {-v[2]/2, -v[3]/2}, {v[2]/2, -v[3]/2}};
     poligono_t *rectangulo = poligono_crear(vertices, 4);
     rotar(rectangulo->vertices, 4, v[4]*PI/180);
     trasladar(rectangulo->vertices, 4, v[0], v[1]);
@@ -571,6 +585,8 @@ poligono_t *leer_geometria_poligono(FILE *f) {
       if(!poligono_agregar_vertice(poligono, v[0], v[1])) return NULL;
     }
 
+
+    
     return poligono;
 }
 
@@ -595,7 +611,7 @@ obstaculo_t *crear_obstaculo(geometria_t geometria, movimiento_t movimiento, col
   obstaculo->n_parametros = n_parametros;
   
   for(size_t i = 0; i < n_parametros; i++)
-  obstaculo->parametros[i] = parametros[i];
+    obstaculo->parametros[i] = parametros[i];
  
 
   obstaculo->geometria = geometria;
@@ -603,23 +619,33 @@ obstaculo_t *crear_obstaculo(geometria_t geometria, movimiento_t movimiento, col
   obstaculo->color = color;
   obstaculo->poligono = poligono;
 
-  obstaculo->impactado = false;
+  obstaculo->impactos = 0;
   return obstaculo;
 }
 
-void destruir_obstaculo(obstaculo_t *obstaculo) {
-  poligono_destruir(obstaculo->poligono);
+obstaculo_t *crear_atrapabolas(void) {
+    float vertices[][2] = {{180,0}, {180,-30}, {165,-30}, {165,-15}, {15,-15}, {15,-30}, {0,-30}, {0,0}};
+    int16_t parametros[3] = {MAX_X+100, 200, -376};
+    //rotar(vertices, 8, PI);
+    trasladar(vertices, 8, MIN_X, MAX_Y+15);
+    obstaculo_t *atrapabolas = crear_obstaculo(GEO_POLIGONO, MOV_HORIZONTAL, COLOR_GRIS, poligono_crear(vertices, 8), 3, parametros);
+    return atrapabolas;
+}
 
+void destruir_obstaculo(obstaculo_t *obstaculo) {
+    puts("ENTRE AL DESTRUIR");
+  poligono_destruir(obstaculo->poligono);
+    puts("DESTRUI EL POLIGONO");
   free(obstaculo);
 }
 
 
 bool consultar_impacto(obstaculo_t *obstaculo) {
-  return obstaculo->impactado;
+  return obstaculo->impactos;
 }
 
 void obstaculo_impactar(obstaculo_t *obstaculo) {
-  obstaculo->impactado = true;
+  obstaculo->impactos ++;
 }
 
 /*
@@ -664,27 +690,30 @@ void mover(obstaculo_t *obstaculo) {
             return;
         }
     }
-
 }
 
 
 
 void dibujar_obstaculo(SDL_Renderer *renderer, obstaculo_t *obstaculo) {
   switch(obstaculo->color) {
-      case(COLOR_AZUL): {
+    case(COLOR_AZUL): {
               SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0xFF, 0x00);
               break;
             }
-      case(COLOR_NARANJA):{
-              SDL_SetRenderDrawColor(renderer, 0xFF, 0xC0, 0x00, 0x00);
+    case(COLOR_NARANJA):{
+              SDL_SetRenderDrawColor(renderer, 0xFF, 0x80, 0x00, 0x00);
               break;
             }
-      case(COLOR_GRIS):{ 
+    case(COLOR_GRIS):{ 
               SDL_SetRenderDrawColor(renderer, 0xC0, 0xC0, 0xC0, 0x00);
               break;
             }
-      case(COLOR_VERDE): {
+    case(COLOR_VERDE): {
               SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
+              break;
+            }
+    case(COLOR_AMARILLO): {
+              SDL_SetRenderDrawColor(renderer, 0xFF, 0xE9, 0x00, 0x00);
               break;
             }
   }
@@ -711,7 +740,7 @@ void dibujar_poligono(SDL_Renderer *renderer, poligono_t *obstaculo) {
 
     for(i = 0; i < obstaculo->n-1; i++) {
             SDL_RenderDrawLine(renderer, obstaculo->vertices[i][0], obstaculo->vertices[i][1], obstaculo->vertices[i+1][0], obstaculo->vertices[i+1][1]);
-        }
+    }
         SDL_RenderDrawLine(renderer, obstaculo->vertices[obstaculo->n-1][0], obstaculo->vertices[obstaculo->n-1][1], obstaculo->vertices[0][0], obstaculo->vertices[0][1]);
 }
 
@@ -738,15 +767,7 @@ void escribir_texto(SDL_Renderer *renderer, TTF_Font *font, const char *s, int x
 #endif
 
 
-void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
-
-    FILE *f = fopen(argv[1], "rb");
-    if(f == NULL) {
-        fprintf(stderr, "No pudo abrirse \"%s\"\n", argv[1]);
-        return;
-    }
-
-  
+void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista) {
 
     int nivel = 0;
     while(1) {
@@ -787,7 +808,7 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
          
         }
 
-        printf("Cant Obstaculos %zd\n", obstaculos);
+        printf("Cant Obstaculos %d\n", obstaculos);
         printf("Largo de la lista %zd\n", lista_largo(lista));
         puts("HASTA ACA LLEGUE");
         return;
@@ -795,7 +816,84 @@ void lectura(int argc, char *argv[], SDL_Renderer *renderer, lista_t *lista) {
     return;
   }
 
+
+/////// CHOQUES
+
+bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, size_t *poder) {
+    float norm_x, norm_y;
+    if(poligono_distancia(obstaculo->poligono, *cx, *cy, &norm_x, &norm_y) < BOLA_RADIO){
+        obstaculo->impactos ++;
+        reflejar(norm_x, norm_y, cx, cy, vx, vy);
+        *vx *= PLASTICIDAD;
+        *vy *= PLASTICIDAD;
+        if(obstaculo->color == COLOR_VERDE) {
+                    *poder = 1;
+                    
+                }
+        if(obstaculo->color != COLOR_GRIS) obstaculo->color = COLOR_AMARILLO;
+        return true;
+    }
+    return false;
+}
+
+void activar_poder(float *cx, float *cy, lista_t *lista) {
+    lista_iter_t *iter = lista_iter_crear(lista);
+    float norm_x, norm_y;
+    ;
+    while(!lista_iter_al_final(iter)) {
+          obstaculo_t *aux = lista_iter_ver_actual(iter);
+
+          if(100 > poligono_distancia(aux->poligono, *cx, *cy, &norm_x, &norm_y) && aux->color != COLOR_GRIS) {
+            
+            aux->color = COLOR_AMARILLO;
+            lista_iter_avanzar(iter);
+            continue;
+            
+          }
+          
+          lista_iter_avanzar(iter);
+        }
+
+        
+
+}
+
+void verificar_choques(lista_t *lista, size_t *naranja) {
+    lista_iter_t *iter = lista_iter_crear(lista);
+                        
+        while(!lista_iter_al_final(iter)) {
+            obstaculo_t *aux = lista_iter_ver_actual(iter);
+            if(aux->color == COLOR_AMARILLO){
+                    destruir_obstaculo(lista_iter_ver_actual(iter));
+                    lista_iter_borrar(iter);
+                        continue;
+            }
+                            
+            if(aux->color == COLOR_NARANJA) {
+                *naranja += 1;
+            }
+                lista_iter_avanzar(iter);
+        }
+                        
+        lista_iter_destruir(iter);
+        return;
+}
+
+//// FIN DE CHOQUES
+
 int main(int argc, char *argv[]) {
+    if(argc != 2) {
+        printf("Error, dame un nivel\n");
+        return 1;
+    }
+
+    FILE *f = fopen(argv[1], "rb");
+    if(f == NULL) {
+        fprintf(stderr, "No pudo abrirse \"%s\"\n", argv[1]);
+        return 1;
+    }
+
+
     SDL_Init(SDL_INIT_VIDEO);
 
 #ifdef TTF
@@ -806,159 +904,224 @@ int main(int argc, char *argv[]) {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Event event;
-
-    lista_t *lista = lista_crear();
-    lectura(argc, argv, renderer, lista);
-    
-
     SDL_CreateWindowAndRenderer(VENTANA_ANCHO, VENTANA_ALTO, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Peggle");
 
-    int dormir = 0;
-    int bolas = 10;
-    // BEGIN código del alumno
+    for(size_t nivel = 1; nivel <= CANT_NIVELES; nivel++){
+
+        lista_t *lista = lista_crear();
+        lectura(f, renderer, lista);
+
+        obstaculo_t *atrapabolas = crear_atrapabolas();
+        lista_insertar_ultimo(lista, atrapabolas);
     
+        int dormir = 0;
         
-    float canon_angulo = 0; // Ángulo del cañón
-    bool cayendo = false;   // ¿Hay bola disparada?
-
-    float cx, cy;   // Centro de la bola
-    float vx, vy;   // Velocidad de la bola
-    // END código del alumno
-
-    unsigned int ticks = SDL_GetTicks();
-    while(1) {
-        if(SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT)
-                break;
-
-            // BEGIN código del alumno
-            if(event.type == SDL_MOUSEBUTTONDOWN) {
-                if(! cayendo)
-                    cayendo = true;
-            }
-            else if (event.type == SDL_MOUSEMOTION) {
-                canon_angulo = atan2(event.motion.x - CANON_X, event.motion.y - CANON_Y);
-                if(canon_angulo > CANON_MAX)
-                    canon_angulo = CANON_MAX;
-                if(canon_angulo < -CANON_MAX)
-                    canon_angulo = -CANON_MAX;
-            }
-            // END código del alumno
-
-            continue;
-        }
-        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
-        SDL_RenderClear(renderer);
-        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
-
-
         // BEGIN código del alumno
-        #ifdef TTF
-        escribir_texto(renderer, font, "Peggle", 100, 20);
-        escribir_texto(renderer, font, "Nivel 1", 350, 20);
-        #endif
-
-        lista_iter_t *iter = lista_iter_crear(lista);
-
-        for(size_t i = 0; i < lista->largo; i++) {
-          obstaculo_t *aux = lista_iter_ver_actual(iter);
-
-          dibujar_obstaculo(renderer, aux);
-          mover(aux);
-          lista_iter_insertar(iter, aux);
-          lista_iter_borrar(iter);
-          lista_iter_avanzar(iter);
-        }
-
-
-        if(lista_iter_al_final(iter)){
-                  lista_iter_destruir(iter);
-        }
-
-
-        if(cayendo) {
-            // Si la bola está cayendo actualizamos su posición
-            vy = computar_velocidad(vy, G, DT);
-            vx *= ROZAMIENTO;
-            vy *= ROZAMIENTO;
-            cx = computar_posicion(cx, vx, DT);
-            cy = computar_posicion(cy, vy, DT);
-        }
-        else {
-            // Si la bola no se disparó establecemos condiciones iniciales
-            cx = CANON_X + CANON_LARGO * sin(canon_angulo);
-            cy = CANON_Y + CANON_LARGO * cos(canon_angulo);
-            vx = BOLA_VI * sin(canon_angulo);
-            vy = BOLA_VI * cos(canon_angulo);
-        }
-
-        // Rebote contra las paredes:
-        if(cx < MIN_X + BOLA_RADIO || cx > MAX_X - BOLA_RADIO) vx = - vx;
-        if(cy < MIN_Y + BOLA_RADIO) vy = -vy;
-
-        // Se salió de la pantalla:
-        if(cy > MAX_Y - BOLA_RADIO) {
-                    cayendo = false;
-                    bolas --;
-                    if(bolas < 0)
-                        break;
-        }
-
-        // Dibujo cantidad de bolas
-        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
-        for(size_t i = 0; i < bolas; i++) {
-            dibujar_circulo(renderer, circular(RESOLUCION, 15, 40, 40*(i+1)));
-        }
-
-        // Dibujamos el cañón:
-        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
-        SDL_RenderDrawLine(renderer, CANON_X, CANON_Y, CANON_X + sin(canon_angulo) * CANON_LARGO, CANON_Y + cos(canon_angulo) * CANON_LARGO);
-
-        // Dibujamos la bola:
-        poligono_t *bola = circular(RESOLUCION, BOLA_RADIO, cx, cy);
-        dibujar_circulo(renderer, bola);
-
-        // Dibujamos las paredes:
-        SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
-        SDL_RenderDrawLine(renderer, MIN_X, MIN_Y, MAX_X, MIN_Y);
-        SDL_RenderDrawLine(renderer, MIN_X, MAX_Y, MAX_X, MAX_Y);
-        SDL_RenderDrawLine(renderer, MIN_X, MAX_Y, MIN_X, MIN_Y);
-        SDL_RenderDrawLine(renderer, MAX_X, MAX_Y, MAX_X, MIN_Y);
-
-        // Dibujamos el vector de velocidad:
-        float x_vector = cx;
-        float y_vector = cy;
-        float vel_vector_y = vy;
-        float vel_vector_x = vx;
-        while(y_vector < MAX_Y) {
-            SDL_RenderDrawLine(renderer, x_vector, y_vector, x_vector + vel_vector_x * DT, y_vector + vel_vector_y * DT);
-            x_vector = computar_posicion(x_vector, vel_vector_x, DT);
-            y_vector = computar_posicion(y_vector, vel_vector_y, DT);
-            vel_vector_y = computar_velocidad(vel_vector_y, G, DT);
-        }
-
-        //SDL_RenderDrawLine(renderer, cx, cy, cx + vx, cy + vy);
+        char s[30];
+        sprintf(s, "Nivel %zd", nivel);
+         
+        int bolas = 13;
+        bool bola_atrapada = false;
+        size_t naranja = 0;    
+        size_t poder = 0;
+        float canon_angulo = 0; // Ángulo del cañón
+        bool cayendo = false;   // ¿Hay bola disparada?
+    
+        float cx, cy;   // Centro de la bola
+        float vx, vy;   // Velocidad de la bola
         // END código del alumno
+    
+        unsigned int ticks = SDL_GetTicks();
+        while(1) {
+            if(SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT)
+                    break;
+    
+                // BEGIN código del alumno
+                if(event.type == SDL_MOUSEBUTTONDOWN) {
+                    if(! cayendo)
+                        cayendo = true;
+                }
+                else if (event.type == SDL_MOUSEMOTION) {
+                    canon_angulo = atan2(event.motion.x - CANON_X, event.motion.y - CANON_Y);
+                    if(canon_angulo > CANON_MAX)
+                        canon_angulo = CANON_MAX;
+                    if(canon_angulo < -CANON_MAX)
+                        canon_angulo = -CANON_MAX;
+                }
+                // END código del alumno
+    
+                continue;
+            }
+            SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
+            SDL_RenderClear(renderer);
+            SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
+    
+    
+            // BEGIN código del alumno
+            #ifdef TTF
+                
+            if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 450, 20);
+            
+            escribir_texto(renderer, font, "Peggle", 100, 20);
+            escribir_texto(renderer, font, s , 350, 20);
+            
 
-        SDL_RenderPresent(renderer);
-        ticks = SDL_GetTicks() - ticks;
-        if(dormir) {
-            SDL_Delay(dormir);
-            dormir = 0;
+            #endif
+    
+            if(poder) {
+                        activar_poder(&cx, &cy, lista);
+                        poder = 0;
+                      }
+    
+            lista_iter_t *iter = lista_iter_crear(lista);
+    
+            while(!lista_iter_al_final(iter)) {
+              obstaculo_t *aux = lista_iter_ver_actual(iter);
+    
+              
+              mover(aux);
+              choque(aux, &cx, &cy, &vx, &vy, &poder);
+
+              if(aux->impactos >= 30 && aux->color != COLOR_GRIS){
+                lista_iter_borrar(iter);
+                lista_iter_avanzar(iter);
+                continue;
+              }
+              dibujar_obstaculo(renderer, aux);
+              lista_iter_avanzar(iter);
+              
+              
+            }
+    
+    
+            if(lista_iter_al_final(iter)){
+                      lista_iter_destruir(iter);
+            }
+    
+    
+            if(cayendo) {
+                // Si la bola está cayendo actualizamos su posición
+                vy = computar_velocidad(vy, G, DT);
+                vx *= ROZAMIENTO;
+                vy *= ROZAMIENTO;
+                cx = computar_posicion(cx, vx, DT);
+                cy = computar_posicion(cy, vy, DT);
+            }
+            else {
+                // Si la bola no se disparó establecemos condiciones iniciales
+                cx = CANON_X + CANON_LARGO * sin(canon_angulo);
+                cy = CANON_Y + CANON_LARGO * cos(canon_angulo);
+                vx = BOLA_VI * sin(canon_angulo);
+                vy = BOLA_VI * cos(canon_angulo);
+            }
+    
+            // Rebote contra las paredes:
+            if(cx < MIN_X + BOLA_RADIO || cx > MAX_X - BOLA_RADIO) vx = - vx;
+            if(cy < MIN_Y + BOLA_RADIO) vy = -vy;
+    
+            // Se salió de la pantalla:
+            if(cy > MAX_Y - BOLA_RADIO) {
+                        if(atrapabolas->poligono->vertices[3][0] + BOLA_RADIO > cx && cx > atrapabolas->poligono->vertices[5][0] - BOLA_RADIO) {
+                            bola_atrapada = true;
+                            bolas ++;
+                        }
+                        else bola_atrapada = false;
+                        cayendo = false;
+    
+                        
+                        poder = 0;
+                        bolas --;
+                        
+                        naranja = 0;
+                        verificar_choques(lista, &naranja);
+                        printf("Largo de la lista = %zd\n", lista->largo);
+                        printf("Naranjas = %zd\n", naranja);
+                        
+                        printf("Naranjas = %zd\n", naranja);
+                        if(naranja == 0) {
+                            printf("Ganaste\n");
+                            //lista_destruir(lista, destruir_obstaculo);
+                            break;
+                        }
+
+                        if(bolas < 0){
+                            printf("Perdiste, perdiste, no hay nadie peor que vos\n");
+                            //bolas ++;
+                            //lista_destruir(lista, destruir_obstaculo);  
+                            nivel = CANT_NIVELES;
+                            break;
+                            
+                        }
+    
+                        
+    
+    
+            }
+    
+            // Dibujo cantidad de bolas
+            SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
+            for(size_t i = 0; i < bolas; i++) {
+                dibujar_circulo(renderer, circular(RESOLUCION, 15, 40, 40*(i+1)));
+            }
+    
+            // Dibujamos el cañón:
+            SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
+            SDL_RenderDrawLine(renderer, CANON_X, CANON_Y, CANON_X + sin(canon_angulo) * CANON_LARGO, CANON_Y + cos(canon_angulo) * CANON_LARGO);
+    
+            // Dibujamos la bola:
+            poligono_t *bola = circular(RESOLUCION, BOLA_RADIO, cx, cy);
+            dibujar_circulo(renderer, bola);
+    
+            // Dibujamos las paredes:
+            SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
+            SDL_RenderDrawLine(renderer, MIN_X, MIN_Y, MAX_X, MIN_Y);
+            SDL_RenderDrawLine(renderer, MIN_X, MAX_Y, MAX_X, MAX_Y);
+            SDL_RenderDrawLine(renderer, MIN_X, MAX_Y, MIN_X, MIN_Y);
+            SDL_RenderDrawLine(renderer, MAX_X, MAX_Y, MAX_X, MIN_Y);
+    
+            // Dibujamos el vector de velocidad:
+            float x_vector = cx;
+            float y_vector = cy;
+            float vel_vector_y = vy;
+            float vel_vector_x = vx;
+            while(y_vector < MAX_Y) {
+                SDL_RenderDrawLine(renderer, x_vector, y_vector, x_vector + vel_vector_x * DT, y_vector + vel_vector_y * DT);
+                x_vector = computar_posicion(x_vector, vel_vector_x, DT);
+                y_vector = computar_posicion(y_vector, vel_vector_y, DT);
+                vel_vector_y = computar_velocidad(vel_vector_y, G, DT);
+            }
+    
+            //SDL_RenderDrawLine(renderer, cx, cy, cx + vx, cy + vy);
+            // END código del alumno
+    
+            SDL_RenderPresent(renderer);
+            ticks = SDL_GetTicks() - ticks;
+            if(dormir) {
+                SDL_Delay(dormir);
+                dormir = 0;
+            }
+            else if(ticks < 1000 / JUEGO_FPS)
+                SDL_Delay(1000 / JUEGO_FPS - ticks);
+            ticks = SDL_GetTicks();
+        
+    
+    
+    
+    
+    
         }
-        else if(ticks < 1000 / JUEGO_FPS)
-            SDL_Delay(1000 / JUEGO_FPS - ticks);
-        ticks = SDL_GetTicks();
     }
 
 
     // BEGIN código del alumno
-  
-
+    printf("Cierro el programa\n");
+    fclose(f);
 
 
     // END código del alumno
+    
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
