@@ -395,21 +395,6 @@ bool poligono_agregar_vertice(poligono_t *pol, float x, float y) {
   return true;
 }
 
-void poligono_invertir(poligono_t *pol) {
-    float aux[2];
-    for(size_t i = 0, j = pol->n-1; i < (pol->n)/2; i++, j--) {
-        aux[0] = pol->vertices[i][0];
-        aux[1] = pol->vertices[i][1];
-
-        pol->vertices[i][0] = pol->vertices[j][0];
-        pol->vertices[i][1] = pol->vertices[j][1];
-
-        pol->vertices[j][0] = aux[0];
-        pol->vertices[j][1] = aux[1];
-    }
-    return;
-}
-
 
 poligono_t *circular(size_t resolucion, size_t radio, size_t x, size_t y) {
     float vertices[resolucion][2];
@@ -633,9 +618,7 @@ obstaculo_t *crear_atrapabolas(void) {
 }
 
 void destruir_obstaculo(obstaculo_t *obstaculo) {
-    puts("ENTRE AL DESTRUIR");
   poligono_destruir(obstaculo->poligono);
-    puts("DESTRUI EL POLIGONO");
   free(obstaculo);
 }
 
@@ -820,7 +803,7 @@ void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista) {
 /////// CHOQUES
 
 bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, size_t *poder) {
-    float norm_x, norm_y;
+    float norm_x = 0, norm_y = 0;
     if(poligono_distancia(obstaculo->poligono, *cx, *cy, &norm_x, &norm_y) < BOLA_RADIO){
         obstaculo->impactos ++;
         reflejar(norm_x, norm_y, cx, cy, vx, vy);
@@ -831,6 +814,7 @@ bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, 
                     
                 }
         if(obstaculo->color != COLOR_GRIS) obstaculo->color = COLOR_AMARILLO;
+
         return true;
     }
     return false;
@@ -906,25 +890,35 @@ int main(int argc, char *argv[]) {
     SDL_Event event;
     SDL_CreateWindowAndRenderer(VENTANA_ANCHO, VENTANA_ALTO, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Peggle");
+    
 
-    for(size_t nivel = 1; nivel <= CANT_NIVELES; nivel++){
+    for(size_t nivel = 1; nivel < CANT_NIVELES; nivel++){
+    
+        int dormir = 0;
+        
+        // BEGIN código del alumno
 
         lista_t *lista = lista_crear();
         lectura(f, renderer, lista);
 
         obstaculo_t *atrapabolas = crear_atrapabolas();
         lista_insertar_ultimo(lista, atrapabolas);
-    
-        int dormir = 0;
-        
-        // BEGIN código del alumno
-        char s[30];
-        sprintf(s, "Nivel %zd", nivel);
+
+        char s_nivel[20];
+        sprintf(s_nivel, "Nivel %zd", nivel);
          
-        int bolas = 13;
+        int bolas = MAX_BOLITAS;
+        poligono_t *bolas_poligonos[MAX_BOLITAS];
+        for(size_t i = 0; i < MAX_BOLITAS; i++) {
+            bolas_poligonos[i] = circular(RESOLUCION, 15, 40, 40*(i+1));
+        }
+
+
+
         bool bola_atrapada = false;
         size_t naranja = 0;    
         size_t poder = 0;
+
         float canon_angulo = 0; // Ángulo del cañón
         bool cayendo = false;   // ¿Hay bola disparada?
     
@@ -940,7 +934,7 @@ int main(int argc, char *argv[]) {
     
                 // BEGIN código del alumno
                 if(event.type == SDL_MOUSEBUTTONDOWN) {
-                    if(! cayendo)
+                    if(!cayendo)
                         cayendo = true;
                 }
                 else if (event.type == SDL_MOUSEMOTION) {
@@ -954,6 +948,7 @@ int main(int argc, char *argv[]) {
     
                 continue;
             }
+
             SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0x00);
             SDL_RenderClear(renderer);
             SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
@@ -962,22 +957,22 @@ int main(int argc, char *argv[]) {
             // BEGIN código del alumno
             #ifdef TTF
                 
-            if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 450, 20);
+            if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 500, 20);
             
             escribir_texto(renderer, font, "Peggle", 100, 20);
-            escribir_texto(renderer, font, s , 350, 20);
+            escribir_texto(renderer, font, s_nivel , 350, 20);
             
 
             #endif
     
             if(poder) {
-                        activar_poder(&cx, &cy, lista);
-                        poder = 0;
-                      }
+                activar_poder(&cx, &cy, lista);
+                poder = 0;
+            }
     
             lista_iter_t *iter = lista_iter_crear(lista);
     
-            while(!lista_iter_al_final(iter)) {
+        while(!lista_iter_al_final(iter)) {
               obstaculo_t *aux = lista_iter_ver_actual(iter);
     
               
@@ -985,14 +980,14 @@ int main(int argc, char *argv[]) {
               choque(aux, &cx, &cy, &vx, &vy, &poder);
 
               if(aux->impactos >= 30 && aux->color != COLOR_GRIS){
+                destruir_obstaculo(lista_iter_ver_actual(iter));
                 lista_iter_borrar(iter);
                 lista_iter_avanzar(iter);
                 continue;
               }
+
               dibujar_obstaculo(renderer, aux);
               lista_iter_avanzar(iter);
-              
-              
             }
     
     
@@ -1042,14 +1037,33 @@ int main(int argc, char *argv[]) {
                         printf("Naranjas = %zd\n", naranja);
                         if(naranja == 0) {
                             printf("Ganaste\n");
-                            //lista_destruir(lista, destruir_obstaculo);
+
+                            //Libero lo que quedó // también podría ser lista_destruir
+                            lista_iter_t *iter = lista_iter_crear(lista);
+                            while(!lista_iter_al_final(iter)) {
+                                destruir_obstaculo(lista_iter_ver_actual(iter));
+                                lista_iter_borrar(iter);
+                            }
+                            lista_iter_destruir(iter);
+                            free(lista);
+
                             break;
                         }
 
                         if(bolas < 0){
                             printf("Perdiste, perdiste, no hay nadie peor que vos\n");
-                            //bolas ++;
-                            //lista_destruir(lista, destruir_obstaculo);  
+
+
+                            //Libero lo que quedó // también podría ser lista_destruir
+                            lista_iter_t *iter = lista_iter_crear(lista);
+                            while(!lista_iter_al_final(iter)) {
+                                destruir_obstaculo(lista_iter_ver_actual(iter));
+                                lista_iter_borrar(iter);
+                            }
+                            lista_iter_destruir(iter);
+                            free(lista);
+
+
                             nivel = CANT_NIVELES;
                             break;
                             
@@ -1063,7 +1077,7 @@ int main(int argc, char *argv[]) {
             // Dibujo cantidad de bolas
             SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
             for(size_t i = 0; i < bolas; i++) {
-                dibujar_circulo(renderer, circular(RESOLUCION, 15, 40, 40*(i+1)));
+                dibujar_circulo(renderer, bolas_poligonos[i]);
             }
     
             // Dibujamos el cañón:
@@ -1073,6 +1087,7 @@ int main(int argc, char *argv[]) {
             // Dibujamos la bola:
             poligono_t *bola = circular(RESOLUCION, BOLA_RADIO, cx, cy);
             dibujar_circulo(renderer, bola);
+            poligono_destruir(bola);
     
             // Dibujamos las paredes:
             SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
@@ -1112,10 +1127,28 @@ int main(int argc, char *argv[]) {
     
     
         }
+
+        //Libero memoria de contador de pelotitas
+        for(size_t i = 0; i < MAX_BOLITAS; i++){
+            poligono_destruir((bolas_poligonos[i]));
+        }
+
+        //En caso de que no se haya borrado bien la lista (si cerras la ventana y naranjas != 0 y bolas > 0)
+        if(!lista_esta_vacia(lista)){
+        lista_iter_t *iter = lista_iter_crear(lista);
+            while(!lista_iter_al_final(iter)) {
+                destruir_obstaculo(lista_iter_ver_actual(iter));
+                lista_iter_borrar(iter);
+            }
+            lista_iter_destruir(iter);
+            free(lista);
+    }
     }
 
 
     // BEGIN código del alumno
+
+
     printf("Cierro el programa\n");
     fclose(f);
 
