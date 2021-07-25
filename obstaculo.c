@@ -33,9 +33,7 @@ obstaculo_t *crear_obstaculo(geometria_t geometria, movimiento_t movimiento, col
 }
 
 void destruir_obstaculo(obstaculo_t *obstaculo) {
-    puts("ENTRE AL DESTRUIR");
   poligono_destruir(obstaculo->poligono);
-  puts("DESTRUI EL POLIGONO");
   free(obstaculo);
 }
 

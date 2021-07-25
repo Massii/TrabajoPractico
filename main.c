@@ -124,20 +124,34 @@ int main(int argc, char *argv[]) {
     SDL_CreateWindowAndRenderer(VENTANA_ANCHO, VENTANA_ALTO, 0, &window, &renderer);
     SDL_SetWindowTitle(window, "Peggle");
 
-    for(size_t nivel = 1; nivel <= CANT_NIVELES; nivel++){
+    for(size_t nivel = 1; nivel < CANT_NIVELES; nivel++){
+        int dormir = 0;
+
+        // BEGIN código del alumno
+        double puntos = 0;
+        double contador_naranjas = 0;
+        double multiplicador = 1;
+
         lista_t *lista = lista_crear();
         lectura(f, renderer, lista);
         
         obstaculo_t *atrapabolas = crear_atrapabolas();
         lista_insertar_ultimo(lista, atrapabolas);
+        
+        char s_nivel[20];
+        sprintf(s_nivel, "Nivel %zd", nivel);
 
-        int dormir = 0;
+        char s_puntos[50];
+        sprintf(s_puntos, "Puntos %.1f", puntos*multiplicador);
     
-    // BEGIN código del alumno
-    char s[30];
-    sprintf(s, "Nivel %zd", nivel);
+        int bolas = MAX_BOLITAS;
 
-    int bolas = 13;
+        poligono_t *bolas_poligonos[MAX_BOLITAS];
+        
+        for(size_t i = 0; i < MAX_BOLITAS; i++) {
+            bolas_poligonos[i] = circular(RESOLUCION, 15, 40, 40*(i+1));
+        }
+
     bool bola_atrapada = false;
     size_t naranja = 0;
     size_t poder = 0;
@@ -157,7 +171,7 @@ int main(int argc, char *argv[]) {
 
             // BEGIN código del alumno
             if(event.type == SDL_MOUSEBUTTONDOWN) {
-                if(! cayendo)
+                if(!cayendo)
                     cayendo = true;
             }
             else if (event.type == SDL_MOUSEMOTION) {
@@ -178,14 +192,14 @@ int main(int argc, char *argv[]) {
 
         // BEGIN código del alumno
         #ifdef TTF
-        if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 450, 20);
+        if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 570, 20);
 
         escribir_texto(renderer, font, "Peggle", 100, 20);
-        escribir_texto(renderer, font, "Nivel 1", 350, 20); //-
+        escribir_texto(renderer, font, s_nivel , 250, 20);
         #endif
 
         if(poder) {
-            activar_poder(&cx, &cy, lista);
+            activar_poder(&cx, &cy, lista, &puntos, &contador_naranjas);
             poder = 0;
         }
 
@@ -194,9 +208,10 @@ int main(int argc, char *argv[]) {
         while(!lista_iter_al_final(iter)) {
             obstaculo_t *aux = lista_iter_ver_actual(iter);
             mover(aux);
-            choque(aux, &cx, &cy, &vx, &vy, &poder);
+            choque(aux, &cx, &cy, &vx, &vy, &poder, &puntos, &contador_naranjas);
 
             if(aux->impactos >= 30 && aux->color != COLOR_GRIS){
+                destruir_obstaculo(lista_iter_ver_actual(iter));
                 lista_iter_borrar(iter);
                 lista_iter_avanzar(iter);
                 continue;
@@ -259,25 +274,47 @@ int main(int argc, char *argv[]) {
             else bola_atrapada = false;
             cayendo = false;
 
+            if(contador_naranjas > 10) multiplicador = 2;
+            if(contador_naranjas > 15) multiplicador = 3;
+            if(contador_naranjas > 19) multiplicador = 5;
+            if(contador_naranjas > 21) multiplicador = 10;
+            sprintf(s_puntos, "Puntos %.1f   X%.0f", puntos*multiplicador, multiplicador);
+
+
+
             poder = 0;
             bolas --;
+
             naranja = 0;
             verificar_choques(lista, &naranja);
             printf("Largo de la lista = %zd\n", lista->largo);
             
             printf("Naranjas = %zd\n", naranja);
-            printf("Naranjas = %zd\n", naranja);
+            //printf("Naranjas = %zd\n", naranja);
 
             if(naranja == 0) {
                 printf("Ganaste\n");
-                //lista_destruir(lista, destruir_obstaculo);
+                //Libero lo que quedó // también podría ser lista_destruir
+                lista_iter_t *iter = lista_iter_crear(lista);
+                while(!lista_iter_al_final(iter)) {
+                    destruir_obstaculo(lista_iter_ver_actual(iter));
+                    lista_iter_borrar(iter);
+                }
+                lista_iter_destruir(iter);
+                free(lista);
                 break;
             }
 
             if(bolas < 0){
                 printf("Perdiste, perdiste, no hay nadie peor que vos\n");
-                //bolas ++;
-                //lista_destruir(lista, destruir_obstaculo);  
+                //Libero lo que quedó // también podría ser lista_destruir
+                lista_iter_t *iter = lista_iter_crear(lista);
+                while(!lista_iter_al_final(iter)) {
+                    destruir_obstaculo(lista_iter_ver_actual(iter));
+                    lista_iter_borrar(iter);
+                }
+                lista_iter_destruir(iter);
+                free(lista);
                 nivel = CANT_NIVELES;
                 break;
             }
@@ -287,7 +324,7 @@ int main(int argc, char *argv[]) {
         // Dibujo cantidad de bolas 
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0x00);
         for(size_t i = 0; i < bolas; i++) {
-            dibujar_circulo(renderer, circular(RESOLUCION, 15, 40, 40*(i+1)));
+            dibujar_circulo(renderer, bolas_poligonos[i]);
         }
 
         // Dibujamos el cañón:
@@ -297,6 +334,7 @@ int main(int argc, char *argv[]) {
         // Dibujamos la bola:
         poligono_t *bola = circular(RESOLUCION, BOLA_RADIO, cx, cy);
         dibujar_circulo(renderer, bola);
+        poligono_destruir(bola);
 
         // Dibujamos las paredes:
         SDL_SetRenderDrawColor(renderer, 0x00, 0xFF, 0x00, 0x00);
@@ -320,6 +358,11 @@ int main(int argc, char *argv[]) {
             y_vector = computar_posicion(y_vector, vel_vector_y, DT);
             vel_vector_y = computar_velocidad(vel_vector_y, G, DT);
         }
+
+        // Escribo Puntos
+        escribir_texto(renderer, font, s_puntos , 340, 20);
+        
+        //SDL_RenderDrawLine(renderer, cx, cy, cx + vx, cy + vy);
         // END código del alumno
 
         SDL_RenderPresent(renderer);
@@ -332,17 +375,28 @@ int main(int argc, char *argv[]) {
             SDL_Delay(1000 / JUEGO_FPS - ticks);
         ticks = SDL_GetTicks();
     }
+
+    //Libero memoria de contador de pelotitas
+    for(size_t i = 0; i < MAX_BOLITAS; i++){
+        poligono_destruir((bolas_poligonos[i]));
+    }
+
+    //En caso de que no se haya borrado bien la lista (si cerras la ventana y naranjas != 0 y bolas > 0)
+    if(!lista_esta_vacia(lista)){
+        lista_iter_t *iter = lista_iter_crear(lista);
+        while(!lista_iter_al_final(iter)) {
+            destruir_obstaculo(lista_iter_ver_actual(iter));
+            lista_iter_borrar(iter);
+        }
+
+        lista_iter_destruir(iter);
+        free(lista);
+    }
 }
 
+    // BEGIN código del alumno
     printf("Cierro el programa\n");
     fclose(f);
-
-
-    // BEGIN código del alumno
-  
-
-
-
     // END código del alumno
 
     SDL_DestroyRenderer(renderer);

@@ -9,7 +9,7 @@ $(PROGRAM): main.o lista.o operaciones.o lectura.o poligono.o obstaculo.o choque
 	$(CC) $(CFLAGS) $(LDFLAGS) main.o lista.o operaciones.o lectura.o poligono.o obstaculo.o choques.o -o $(PROGRAM)
 
 main.o: main.h obstaculo.h operaciones.h config.h lectura.h lista.h choques.h
-	$(CC) $(CFLAGS) -c main.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -c main.c
 
 lista.o: lista.h
 	$(CC) $(CFLAGS) -c lista.c
