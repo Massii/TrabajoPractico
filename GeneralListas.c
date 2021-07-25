@@ -802,7 +802,7 @@ void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista) {
 
 /////// CHOQUES
 
-bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, size_t *poder) {
+bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, size_t *poder, double *puntos, double *contador_naranjas) {
     float norm_x = 0, norm_y = 0;
     if(poligono_distancia(obstaculo->poligono, *cx, *cy, &norm_x, &norm_y) < BOLA_RADIO){
         obstaculo->impactos ++;
@@ -811,16 +811,28 @@ bool choque(obstaculo_t *obstaculo, float *cx, float *cy, float *vx, float *vy, 
         *vy *= PLASTICIDAD;
         if(obstaculo->color == COLOR_VERDE) {
                     *poder = 1;
-                    
-                }
-        if(obstaculo->color != COLOR_GRIS) obstaculo->color = COLOR_AMARILLO;
+                    *puntos += 10;
+                    obstaculo->color = COLOR_AMARILLO;
+        }
+        
+        if(obstaculo->color == COLOR_AZUL) {
+            *puntos += 10;
+            obstaculo->color = COLOR_AMARILLO;
+        }
+
+        if(obstaculo->color == COLOR_NARANJA) {
+            *puntos += 100;
+            *contador_naranjas += 1;
+            obstaculo->color = COLOR_AMARILLO;
+        }
+
 
         return true;
     }
     return false;
 }
 
-void activar_poder(float *cx, float *cy, lista_t *lista) {
+void activar_poder(float *cx, float *cy, lista_t *lista, double *puntos, double *contador_naranjas) {
     lista_iter_t *iter = lista_iter_crear(lista);
     float norm_x, norm_y;
     ;
@@ -828,8 +840,22 @@ void activar_poder(float *cx, float *cy, lista_t *lista) {
           obstaculo_t *aux = lista_iter_ver_actual(iter);
 
           if(100 > poligono_distancia(aux->poligono, *cx, *cy, &norm_x, &norm_y) && aux->color != COLOR_GRIS) {
-            
-            aux->color = COLOR_AMARILLO;
+            if(aux->color == COLOR_VERDE) {
+                    *puntos += 10;
+                    aux->color = COLOR_AMARILLO;
+            }
+        
+            if(aux->color == COLOR_AZUL) {
+                *puntos += 10;
+                aux->color = COLOR_AMARILLO;
+            }
+
+            if(aux->color == COLOR_NARANJA) {
+                *puntos += 100;
+                *contador_naranjas += 1;
+                aux->color = COLOR_AMARILLO;
+            }
+
             lista_iter_avanzar(iter);
             continue;
             
@@ -896,7 +922,11 @@ int main(int argc, char *argv[]) {
     
         int dormir = 0;
         
+        
         // BEGIN código del alumno
+        double puntos = 0;
+        double contador_naranjas = 0;
+        double multiplicador = 1;
 
         lista_t *lista = lista_crear();
         lectura(f, renderer, lista);
@@ -906,6 +936,9 @@ int main(int argc, char *argv[]) {
 
         char s_nivel[20];
         sprintf(s_nivel, "Nivel %zd", nivel);
+
+        char s_puntos[50];
+        sprintf(s_puntos, "Puntos %.1f", puntos*multiplicador);
          
         int bolas = MAX_BOLITAS;
         poligono_t *bolas_poligonos[MAX_BOLITAS];
@@ -957,16 +990,16 @@ int main(int argc, char *argv[]) {
             // BEGIN código del alumno
             #ifdef TTF
                 
-            if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 500, 20);
+            if(bola_atrapada == true) escribir_texto(renderer, font, "Atrapaste la bolita", 570, 20);
             
             escribir_texto(renderer, font, "Peggle", 100, 20);
-            escribir_texto(renderer, font, s_nivel , 350, 20);
+            escribir_texto(renderer, font, s_nivel , 250, 20);
             
 
             #endif
     
             if(poder) {
-                activar_poder(&cx, &cy, lista);
+                activar_poder(&cx, &cy, lista, &puntos, &contador_naranjas);
                 poder = 0;
             }
     
@@ -977,7 +1010,7 @@ int main(int argc, char *argv[]) {
     
               
               mover(aux);
-              choque(aux, &cx, &cy, &vx, &vy, &poder);
+              choque(aux, &cx, &cy, &vx, &vy, &poder, &puntos, &contador_naranjas);
 
               if(aux->impactos >= 30 && aux->color != COLOR_GRIS){
                 destruir_obstaculo(lista_iter_ver_actual(iter));
@@ -1024,6 +1057,12 @@ int main(int argc, char *argv[]) {
                         }
                         else bola_atrapada = false;
                         cayendo = false;
+
+                        if(contador_naranjas > 10) multiplicador = 2;
+                        if(contador_naranjas > 15) multiplicador = 3;
+                        if(contador_naranjas > 19) multiplicador = 5;
+                        if(contador_naranjas > 21) multiplicador = 10;
+                        sprintf(s_puntos, "Puntos %.1f   X%.0f", puntos*multiplicador, multiplicador);
     
                         
                         poder = 0;
@@ -1033,8 +1072,7 @@ int main(int argc, char *argv[]) {
                         verificar_choques(lista, &naranja);
                         printf("Largo de la lista = %zd\n", lista->largo);
                         printf("Naranjas = %zd\n", naranja);
-                        
-                        printf("Naranjas = %zd\n", naranja);
+
                         if(naranja == 0) {
                             printf("Ganaste\n");
 
@@ -1107,7 +1145,10 @@ int main(int argc, char *argv[]) {
                 y_vector = computar_posicion(y_vector, vel_vector_y, DT);
                 vel_vector_y = computar_velocidad(vel_vector_y, G, DT);
             }
-    
+            
+            // Escribo Puntos
+            escribir_texto(renderer, font, s_puntos , 340, 20);
+                
             //SDL_RenderDrawLine(renderer, cx, cy, cx + vx, cy + vy);
             // END código del alumno
     
