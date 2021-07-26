@@ -90,7 +90,6 @@ void lectura(FILE *f, SDL_Renderer *renderer, lista_t *lista) {
         }
 
         printf("Cant Obstaculos %d\n", obstaculos);
-        printf("Largo de la lista %zd\n", lista_largo(lista));
         puts("HASTA ACA LLEGUE");
         return;
     }
@@ -159,8 +158,8 @@ int main(int argc, char *argv[]) {
         float canon_angulo = 0; // Ángulo del cañón
         bool cayendo = false;   // ¿Hay bola disparada?
 
-        float cx, cy;   // Centro de la bola
-        float vx, vy;   // Velocidad de la bola
+        float cx=0, cy=0;   // Centro de la bola
+        float vx=0, vy=0;   // Velocidad de la bola
         // END código del alumno
 
         unsigned int ticks = SDL_GetTicks();
@@ -273,10 +272,14 @@ int main(int argc, char *argv[]) {
                 else bola_atrapada = false;
                 cayendo = false;
 
-                if(contador_naranjas > 10) multiplicador = 2;
-                if(contador_naranjas > 15) multiplicador = 3;
-                if(contador_naranjas > 19) multiplicador = 5;
-                if(contador_naranjas > 21) multiplicador = 10;
+                if(contador_naranjas > 10)
+                    multiplicador = 2;
+                if(contador_naranjas > 15)
+                    multiplicador = 3;
+                if(contador_naranjas > 19)
+                    multiplicador = 5;
+                if(contador_naranjas > 21)
+                    multiplicador = 10;
                 sprintf(s_puntos, "Puntos %.1f   X%.0f", puntos*multiplicador, multiplicador);
 
 
@@ -286,10 +289,6 @@ int main(int argc, char *argv[]) {
 
                 naranja = 0;
                 verificar_choques(lista, &naranja);
-                printf("Largo de la lista = %zd\n", lista->largo);
-                
-                printf("Naranjas = %zd\n", naranja);
-                //printf("Naranjas = %zd\n", naranja);
 
                 if(naranja == 0) {
                     printf("Ganaste\n");

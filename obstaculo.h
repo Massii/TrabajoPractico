@@ -20,7 +20,8 @@ typedef struct obstaculo {
 	color_t color;
 	poligono_t *poligono;
 	size_t n_parametros;
-	int16_t parametros[3];
+	//int16_t parametros[3];
+	float parametros[3];
 } obstaculo_t;
 
 obstaculo_t *crear_obstaculo(geometria_t geometria, movimiento_t movimiento, color_t color, poligono_t *poligono, size_t n_parametros, int16_t *parametros);

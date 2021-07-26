@@ -23,7 +23,7 @@
 #define BOLA_RADIO 6
 #define BOLA_VI 450
 
-#define JUEGO_FPS 188
+#define JUEGO_FPS 130
 
 #define G 600
 #define PLASTICIDAD 0.8

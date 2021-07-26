@@ -65,7 +65,9 @@ void punto_mas_cercano(float x0, float y0, float x1, float y1, float xp, float y
     float bx = x1 - x0;
     float by = y1 - y0;
 
-    float alfa = producto_interno(ax, ay, bx, by) / producto_interno(bx, by, bx, by);
+    float alfa = 0;
+    alfa = producto_interno(ax, ay, bx, by) / producto_interno(bx, by, bx, by);
+    //    float alfa = producto_interno(ax, ay, bx, by) / producto_interno(bx, by, bx, by);
 
     if(alfa <= 0) {
         *x = x0;
